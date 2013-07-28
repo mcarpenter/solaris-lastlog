@@ -1,0 +1,47 @@
+
+= solaris-lastlog
+
+Author:: Martin Carpenter
+Email:: mcarpenter@free.fr
+Copyright:: Copyright (c) Martin Carpenter 2013
+
+== About
+The solaris-lastlog gem helps with the reading and writing of Solaris
+binary lastlog(4) files.
+
+== Examples
+
+See the examples subdirectory.
+
+=== Read and display all non-null entries in the lastlog
+
+    require 'solaris/lastlog'
+
+    io = File.open('/var/adm/lastlog', 'r')
+    reader = Solaris::Lastlog.new(:endian => :little)
+    uid = 0
+    while !io.eof? do
+      record = reader.read(io)
+      unless record.ll_time.zero?
+        time = Time.at(record.ll_time)
+        puts "%-5s %s %-16s %-8s" % [uid, time, record.ll_host, record.ll_line]
+      end
+      uid += 1
+    end
+
+=== Filter the lastlog and set root's last login time to the current time
+
+    require 'solaris/lastlog'
+
+    io = File.open('/var/adm/lastlog', 'r')
+    reader = Solaris::Lastlog.new(:endian => :little)
+    first_record = true
+    while !io.eof? do
+      record = reader.read(io)
+      if first_record
+        first_record = false
+        record.ll_time = Time.now.to_i
+      end
+      print record.to_binary_s
+    end
+
